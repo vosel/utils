@@ -1,0 +1,105 @@
+<html>
+<head>
+<script>
+
+function isAsciiLowercaseAlha(aChar)
+{
+	return ((aChar >= 'a') && (aChar <= 'z'));
+}
+function isAsciiUppercaseAlha(aChar)
+{
+	return ((aChar >= 'A') && (aChar <= 'Z'));
+}
+function isAsciiNumeric(aChar)
+{
+	return ((aChar >= '0') && (aChar <= '9'));
+}
+function isAsciiAlhaNum(aChar)
+{
+	return (isAsciiLowercaseAlha(aChar) || isAsciiUppercaseAlha(aChar) || isAsciiNumeric(aChar));
+}
+
+function convertChar(charToConvert)
+{
+	if (isAsciiAlhaNum(charToConvert)) {
+		return (isAsciiUppercaseAlha(charToConvert) ? "+" : "") + charToConvert;
+	}
+	var charCode = (""+charToConvert).charCodeAt();
+
+	switch (charToConvert) {
+	case ' ': return "{SPACE}";
+	case '\t': return "{TAB}";
+	case '\'': return "{'}";
+	case '\"': return "+{'}";
+	case ';': return "{;}";
+	case '[': return "{[}";
+	case ']': return "{]}";
+	case '/': return "{SLASH}";
+	case '\\': return "{BACKSLASH}";
+	case ':': return "+{SEMICOLON}";
+	case ',': return "{,}";
+	case '.': return "{.}";
+	case '=': return "{EQUAL}";
+	case '-': return "{MINUS}";
+	case '`': return "{GRAVE}";
+	case '~': return "+{GRAVE}";
+	case '{': return "+{LBRACKET}";
+	case '}': return "+{RBRACKET}";
+	case '<': return "+{COMMA}";
+	case '>': return "+{PERIOD}";
+	case '!': return "+{1}";
+	case '@': return "+{2}";
+	case '#': return "+{3}";
+	case '$': return "+{4}";
+	case '%': return "+{5}";
+	case '^': return "+{6}";
+	case '&': return "+{7}";
+	case '*': return "+{8}";
+	case '(': return "+{9}";
+	case ')': return "+{0}";
+	case '_': return "+{MINUS}";
+	case '+': return "+{EQUAL}";
+	case '?': return "+{SLASH}";
+	
+	default: return "!!!!!!   ----------   ERROR - unknown symbol for processing -- char code: " + charCode; // TODO: handle this differently
+	}
+}
+
+function convertString(toConvert)
+{
+	var result = "";
+	for (var i = 0; i < toConvert.length; ++i) {
+		result += convertChar(toConvert.charAt(i));
+	}
+	return result;
+}
+
+function doConvertion()
+{
+	var arrayToConvert = document.getElementById("srcToConvert").value.split("\n");
+	var resultString = "";
+	var resultStringWithKeyboardLayoutInversion = "";
+	for (var i = 0; i < arrayToConvert.length; ++i) {
+		var convertedString = convertString(arrayToConvert[i]);
+		resultString += convertedString;
+		resultString += "\n";
+		
+		resultStringWithKeyboardLayoutInversion += "%{SHIFT}" + convertedString + "%{SHIFT}";
+		resultStringWithKeyboardLayoutInversion += "\n";
+	}
+	document.getElementById("convertionResult").value = resultString;
+	document.getElementById("convertionResultWithInversion").value = resultStringWithKeyboardLayoutInversion;
+}
+
+</script>
+<body></body>
+<label>Source text --->>----</label><label>--->>---- Result text</label><label>--->>---- Result text with codepage inversion</label>
+<br>
+<input type="button" onclick="doConvertion()" value="convert" />
+<br>
+<textarea id="srcToConvert" rows="30" cols="100" ></textarea>
+<textarea id="convertionResult"  rows="30" cols="50" ></textarea>
+<textarea id="convertionResultWithInversion"  rows="30" cols="50" ></textarea>
+
+</head>
+</html>
