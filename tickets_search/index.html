@@ -157,7 +157,7 @@ function util_normalizeToTwoDigits(n)
 
 function convertDateObjectInCorrectFormatForURL(dateObj)
 {
-	return util_normalizeToTwoDigits(dateObj.getDate()) + "-" + util_normalizeToTwoDigits(dateObj.getMonth()) + "-" + dateObj.getFullYear();
+	return util_normalizeToTwoDigits(dateObj.getDate()) + "-" + util_normalizeToTwoDigits(dateObj.getMonth() + 1) + "-" + dateObj.getFullYear();
 }
 
 function convertDateStringFromURLtoHtmlElementFormat(dateString) //TODO: extract the momondo-specific code into separate file
@@ -237,7 +237,14 @@ function buildChainOfFlighsInTicket(startIndex, endIndex) {
 		result.push( {
 			from: segmentsTextInputs[i].from.value,
 			to: segmentsTextInputs[i].to.value,
-			date: segmentsTextInputs[i].date.valueAsDate
+			date: segmentsTextInputs[i].date.valueAsDate,
+			getCopyWithDateOffset: function(offset) {
+				return {
+					from: this.from,
+					to: this.to,
+					date: new Date(this.date.getTime() + offset * 1000 * 60 * 60 * 24)
+				};
+			}
 		});
 	}
 	return result;
@@ -454,21 +461,134 @@ function recalcTicketAllocationsForRoute(allTheFlightsForTheRouteInOneArray, arr
 	return arrayOfRouteRepresentations;
 }
 
-function recalcTicketAllocations()
+function util_getVariation(index) {
+	return parseInt(segmentsTextInputs[index].daysVariation.value);
+}
+
+// This function builds a whole bunch of chains (which differ only in dates), and for each of the chain it builds the ticket permuattions for the route.
+function variateDaysAndCalculateTicketsAllocations(baseChain, output_arrayOfLinksWithUnknownPrices) {
+	var resultArray = [];
+	var calculateAndPushInformationForGivenRoute = function(currentChain) {
+		let textRepresentationOfRoute = "-";
+		for (let i = 0; i < currentChain.length; ++i) {
+			textRepresentationOfRoute += currentChain[i].date.getDate() + "-";
+		}
+		let arrayOfRouteRepresentations = recalcTicketAllocationsForRoute(currentChain, output_arrayOfLinksWithUnknownPrices);
+		
+		resultArray.push({
+			text: textRepresentationOfRoute,
+			ticketsTableData: arrayOfRouteRepresentations,
+			bestKnownPrice: arrayOfRouteRepresentations[0].totalPrice
+		});
+	}; //end of calculateAndPushInformationForGivenRoute() function object
+	
+	var isChainValid = function(chainToTest) {
+		for (let i = 0; i < (chainToTest.length - 1); ++i) {
+			if (chainToTest[i].date >= chainToTest[i+1].date) {
+				return false; //We ensure that the dates don't overlap
+			}
+		}
+		return true;
+	};
+	
+	var currentVariationsArray = [];
+	var maxVariationsArray = [];
+	for (let i = 0; i < baseChain.length; ++i) {
+		maxVariationsArray.push(util_getVariation(i));
+		currentVariationsArray.push(0);
+	}
+	
+	while (true) {
+		//for given variations array, calculate chain for the route:
+		let currentChain = [];
+		for (var i = 0; i < currentVariationsArray.length; ++i) {
+			currentChain.push(
+				baseChain[i].getCopyWithDateOffset(currentVariationsArray[i]));
+		}
+		if (isChainValid(currentChain)) {
+			calculateAndPushInformationForGivenRoute(currentChain);
+		}
+	
+		//calculate the next variation:
+		var cycledThroughAllOfTheVariations = true;
+		for (var i = 0; i < currentVariationsArray.length; ++i) {
+			++currentVariationsArray[i];
+			if (currentVariationsArray[i] <= maxVariationsArray[i]) {
+				cycledThroughAllOfTheVariations = false;
+				break;
+			} else {
+				currentVariationsArray[i] = 0;
+			}
+		}
+		if (cycledThroughAllOfTheVariations) {
+			break;
+		}
+	}
+	
+	resultArray.sort(function(left, right) {
+		if (left.bestKnownPrice == right.bestKnownPrice) { //TODO: extract this comparator into separate re-usable object (it's code is copy-pasted from above)
+			return 0;
+		}
+		if (left.bestKnownPrice == -1) {
+			return 1;
+		}
+		if (right.bestKnownPrice == -1) {
+			return -1;
+		}
+		return left.bestKnownPrice - right.bestKnownPrice;
+	});
+	
+	return resultArray;
+}
+
+// The global array, which contains all of the auto-calculated data: all the variations over dates and tickets permutations for the given route.
+var ALL_THE_GENERATED_ROUTE_VARIATIONS_DATA = null;
+
+function showTheRoutesTableForDatesVariation(variationIndex)
 {
-	var arrayOfLinksWithUnknownPrices = [];
-	var allTheFlightsInOneArray = buildChainOfFlighsInTicket(0, segmentsTextInputs.length);
-	var arrayOfRouteRepresentations = recalcTicketAllocationsForRoute(allTheFlightsInOneArray, arrayOfLinksWithUnknownPrices);
+	var entryToShow = ALL_THE_GENERATED_ROUTE_VARIATIONS_DATA[variationIndex];
+	var arrayOfRouteRepresentations = entryToShow.ticketsTableData;
 	var tableInnerHtml = "";
 	for (let i = 0; i < arrayOfRouteRepresentations.length; ++i) {
 		tableInnerHtml += arrayOfRouteRepresentations[i].rowHtml;
 	}
-	
 	tableInnerHtml += "<tr><th>total entries: " + arrayOfRouteRepresentations.length + "</th><th></th><th></th><th></th></tr>"
 	DGEBI('ticketAllocationOptions').innerHTML = tableInnerHtml;
+}
+
+function recalcTicketAllocations()
+{
+	var arrayOfLinksWithUnknownPrices = [];
+	var allTheFlightsInOneArray = buildChainOfFlighsInTicket(0, segmentsTextInputs.length);
+	
+	ALL_THE_GENERATED_ROUTE_VARIATIONS_DATA = variateDaysAndCalculateTicketsAllocations(allTheFlightsInOneArray, arrayOfLinksWithUnknownPrices);
+	
+	var datesVariationsTableInnerHtml = "<th>index</th><th>dates info</th><th>price info</th>";
+	for (let i = 0; i < ALL_THE_GENERATED_ROUTE_VARIATIONS_DATA.length; ++i) {
+		let entry = ALL_THE_GENERATED_ROUTE_VARIATIONS_DATA[i];
+		datesVariationsTableInnerHtml += "<tr>";
+		datesVariationsTableInnerHtml += "<td>";
+		datesVariationsTableInnerHtml += i;
+		datesVariationsTableInnerHtml += "</td>";
+		datesVariationsTableInnerHtml += "<td>";
+		datesVariationsTableInnerHtml += "<button onclick='showTheRoutesTableForDatesVariation(" + i + ")'>" + entry.text + "</button>";
+		datesVariationsTableInnerHtml += "</td>";
+		datesVariationsTableInnerHtml += "<td>";
+		if (entry.bestKnownPrice > 0) {
+			datesVariationsTableInnerHtml += entry.bestKnownPrice;
+		}
+		datesVariationsTableInnerHtml += "</td>";		
+		datesVariationsTableInnerHtml += "</tr>";
+	}
+	DGEBI('datesVariationsOptions').innerHTML = datesVariationsTableInnerHtml;
+	
+	showTheRoutesTableForDatesVariation(0);
 	
 	var unknownLinksTableHtml = "";
-	for (var i = 0; i < arrayOfLinksWithUnknownPrices.length; ++i) {
+	arrayOfLinksWithUnknownPrices.sort(function(left, right) { //order the links by length
+		return left.url.length - right.url.length;
+	});
+	for (let i = 0; i < arrayOfLinksWithUnknownPrices.length; ++i) {
 		let linkInfo = arrayOfLinksWithUnknownPrices[i];
 		unknownLinksTableHtml += "<tr><td>";
 		unknownLinksTableHtml += "<a href='" + linkInfo.url + "' + target='_blank'>" + linkInfo.textRepresentation + "</a>"; //TODO: extract this into method (building link from the object)
@@ -516,8 +636,15 @@ function recalcTicketAllocations()
 
 <br>
 <button onclick='recalcTicketAllocations()'>recalc ticket allocations</button>
+
 <table border='1' id='ticketAllocationOptions'>
 </table>
+
+<label>Dates variations: </label>
+<br>
+<table border='1' id='datesVariationsOptions'>
+</table>
+
 <br>
 <label id='unknownLinksInfoLabel'>Unknown prices links: </label>
 <table border='1' id='unknownPricesTable'>
