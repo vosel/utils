@@ -353,12 +353,9 @@ function onUpdate()
 {
 	DGEBI('myTable').innerHTML = myHtml;
 }
-
-function recalcTicketAllocations()
+function recalcTicketAllocationsForRoute(allTheFlightsForTheRouteInOneArray, arrayOfLinksWithUnknownPrices)
 {
-	var allTheFlightsInOneArray = buildChainOfFlighsInTicket(0, segmentsTextInputs.length);
-	var TOTAL_FLIGHTS_COUNT = allTheFlightsInOneArray.length;
-	var arrayOfLinksWithUnknownPrices = [];
+	var TOTAL_FLIGHTS_COUNT = allTheFlightsForTheRouteInOneArray.length;
 	
 	// Function object for managing the entries in the route prices table:
 	var storeUnknownPriceIfNotAlreadyThere = function(linkInfoObject) {
@@ -410,8 +407,6 @@ function recalcTicketAllocations()
 		return true;
 	};
 
-	var tableInnerHtml = "";
-	var totalEntriesInTable = 0;
 	for (let ticketsAmount = 1; ticketsAmount <= TOTAL_FLIGHTS_COUNT; ++ticketsAmount) { //TODO: extract this logic into util function
 		let arrayOfPossibleTicketsSizes = PartitionsAndPermutations.buildYoungTabloesSet(
 			TOTAL_FLIGHTS_COUNT, ticketsAmount);
@@ -421,11 +416,10 @@ function recalcTicketAllocations()
 			if (ensureTicketSizeIsLessOrEqualTo(currentTicketsSizesSet, MAX_FLIGHTS_IN_ONE_TICKET)) {
 			//TODO: add a check here for the maximum ticket size (currently we don't need this check, but for longer routes it will be useful - the maximum ticket size allowed by the site is 4)
 				let ticketArrangementsPossibilities = PartitionsAndPermutations.findSetsOfSelections(currentTicketsSizesSet);
-				var flightsArrangedIntoTickets = PartitionsAndPermutations.buildAllSelectionsForElements(allTheFlightsInOneArray, ticketArrangementsPossibilities, ticketsAmount);
+				var flightsArrangedIntoTickets = PartitionsAndPermutations.buildAllSelectionsForElements(allTheFlightsForTheRouteInOneArray, ticketArrangementsPossibilities, ticketsAmount);
 				
 				for (let flightsArrangement = 0; flightsArrangement < flightsArrangedIntoTickets.length; ++flightsArrangement) {
 					buildHtmlTableRowForTicketsSet(flightsArrangedIntoTickets[flightsArrangement]);
-					++totalEntriesInTable;
 				}
 			}
 		}
@@ -442,11 +436,20 @@ function recalcTicketAllocations()
 		}
 		return left.totalPrice - right.totalPrice;
 	});
+	return arrayOfRouteRepresentations;
+}
+
+function recalcTicketAllocations()
+{
+	var arrayOfLinksWithUnknownPrices = [];
+	var allTheFlightsInOneArray = buildChainOfFlighsInTicket(0, segmentsTextInputs.length);
+	var arrayOfRouteRepresentations = recalcTicketAllocationsForRoute(allTheFlightsInOneArray, arrayOfLinksWithUnknownPrices);
+	var tableInnerHtml = "";
 	for (let i = 0; i < arrayOfRouteRepresentations.length; ++i) {
 		tableInnerHtml += arrayOfRouteRepresentations[i].rowHtml;
 	}
 	
-	tableInnerHtml += "<tr><th>total entries: " + totalEntriesInTable + "</th><th></th><th></th><th></th></tr>"
+	tableInnerHtml += "<tr><th>total entries: " + arrayOfRouteRepresentations.length + "</th><th></th><th></th><th></th></tr>"
 	DGEBI('ticketAllocationOptions').innerHTML = tableInnerHtml;
 	
 	var unknownLinksTableHtml = "";
