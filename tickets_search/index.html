@@ -395,8 +395,7 @@ function recalcTicketAllocationsForRoute(allTheFlightsForTheRouteInOneArray, arr
 				result += "<a href='" + linkInfo.url + "' + target='_blank'>" + linkInfo.textRepresentation + "</a>"; //TODO: extract this into method (building link from the object)
 				if (linkInfo.price == -1) {
 					routePrice = -1;
-					storeUnknownPriceIfNotAlreadyThere(linkInfo)
-					
+					storeUnknownPriceIfNotAlreadyThere(linkInfo);
 				}
 				if (routePrice != -1) {
 					routePrice += linkInfo.price;
