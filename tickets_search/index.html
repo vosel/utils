@@ -253,10 +253,10 @@ function getCurrentLinkForChain(chainData) //note: this function no longer depen
 			}
 			textSummary += from_value;
 		}
-		textSummary += ">" + to_value;
 		if (SHOW_DAY_OF_THE_MONTH_IN_LINK_TEXT) {
-			textSummary += chainData[i].dateString.substr(0, 2) + ">";
+			textSummary += ">" + chainData[i].dateString.substr(0, 2);
 		}
+		textSummary += ">" + to_value;
 		previousDestination = to_value;
 		var in_url_index = i;
 		segmentsPartOfUrl += "&SO" + in_url_index + "=" + from_value + "&SD" 
