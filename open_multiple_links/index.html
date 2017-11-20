@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+</head>
+<script>
+
+var stackOfPendingLinks = [];
+var listOfProcessedLinks = [];
+var TIMEOUT = -1;
+var loopOn = false;
+var loopID = null;
+function addLinks()
+{
+	var linksArray = document.getElementById("linksToOpen").value.split("\n");
+	
+	for (let i = 0; i < linksArray.length; ++i) {
+		let entry = linksArray[i];
+		if (entry.length > 0) {
+			stackOfPendingLinks.unshift(entry); // note: unshift == push_front
+		}
+	}
+	document.getElementById("linksToOpen").value = "";
+	
+	if (!loopOn) {
+		openNextLink();
+		startLoop();	
+	}
+}
+function resetTimeout()
+{
+	TIMEOUT = getTimeoutValueFromUI();
+	if (loopOn) {
+		stopLoop();
+		startLoop();
+	}
+	refreshStatus();
+}
+function openNextLink()
+{
+	if (stackOfPendingLinks.length == 0) {
+		stopLoop();
+		return;
+	} else {
+		var nextLink = stackOfPendingLinks.pop();
+		window.open(nextLink, '_blank');
+		//	window.focus(); //TODO: maybe will re-focus to this page after the link is opened
+		listOfProcessedLinks.push(nextLink);
+		var processedLinksText = "";
+		for (let i = 0; i < listOfProcessedLinks.length; ++i) {
+			processedLinksText += listOfProcessedLinks[i] + "\n";
+		}
+		document.getElementById("processedLinks").value = processedLinksText;
+	}
+	refreshStatus();
+	var linksToProcessHtml = "pending links: <br>";
+	for (let i = 0; i < stackOfPendingLinks.length; ++i) {
+		linksToProcessHtml += stackOfPendingLinks[i] + "<br>"
+	}
+	document.getElementById("pendingLinks").innerHTML = linksToProcessHtml;
+}
+function getTimeoutValueFromUI()
+{
+	return parseInt(document.getElementById("timeoutValue").value);
+}
+function stopLoop()
+{
+	clearInterval(loopID);
+	loopOn = false;
+	refreshStatus();
+}
+function startLoop()
+{	
+	loopID = setInterval(function(){ openNextLink();}, TIMEOUT);
+	loopOn = true;
+	refreshStatus();
+}
+function onLoad()
+{
+	TIMEOUT = getTimeoutValueFromUI();
+	refreshStatus();
+	
+}
+function refreshStatus()
+{
+	var timeoutSubstring = "timeout=" + (TIMEOUT/1000) + "sec.";
+	if (loopOn) {
+		setStatus("on, " + timeoutSubstring + stackOfPendingLinks.length + " links left");
+	} else {
+		setStatus("off, " + timeoutSubstring);
+	}
+}
+function setStatus(message)
+{
+	document.getElementById("statusInfo").innerHTML = message;
+}
+</script>
+
+<body onload='onLoad()'>
+<label id='statusInfo'></label><button onclick='stopLoop()'>stop processing</button>
+<br>
+<input type='number' id='timeoutValue' value='30000'>timeout(ms)</input> <button onclick='resetTimeout()'>reset</button>
+<br>
+<textarea rows="10" cols="100" id='linksToOpen'></textarea>
+<br>
+<button onclick='addLinks()'>add links to queue</button>
+<br>
+<label id='pendingLinks'></label>
+<br>
+<label> Processed links: </label>
+<br>
+<textarea id='processedLinks'></textarea>
+</body>
+</html>
