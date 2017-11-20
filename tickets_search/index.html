@@ -588,14 +588,17 @@ function recalcTicketAllocations()
 	arrayOfLinksWithUnknownPrices.sort(function(left, right) { //order the links by length
 		return left.url.length - right.url.length;
 	});
+	var unknownLinksText = "";
 	for (let i = 0; i < arrayOfLinksWithUnknownPrices.length; ++i) {
 		let linkInfo = arrayOfLinksWithUnknownPrices[i];
 		unknownLinksTableHtml += "<tr><td>";
 		unknownLinksTableHtml += "<a href='" + linkInfo.url + "' + target='_blank'>" + linkInfo.textRepresentation + "</a>"; //TODO: extract this into method (building link from the object)
 		unknownLinksTableHtml += "</td></tr>";
+		unknownLinksText += linkInfo.url + "\n";
 	}
 	DGEBI('unknownLinksInfoLabel').innerHTML = "Unknown prices links (" + arrayOfLinksWithUnknownPrices.length + "): ";
 	DGEBI('unknownPricesTable').innerHTML = unknownLinksTableHtml;
+	DGEBI('unknownLinksInTextForm').value = unknownLinksText;
 }
 
 </script >
@@ -646,9 +649,11 @@ function recalcTicketAllocations()
 </table>
 
 <br>
-<label id='unknownLinksInfoLabel'>Unknown prices links: </label>
+<label id='unknownLinksInfoLabel'>Unknown prices links (table and text views): </label>
 <table border='1' id='unknownPricesTable'>
 </table>
+<textarea rows="2" cols="100" type="text" id="unknownLinksInTextForm"></textarea>
+<br>
 <textarea rows="10" cols="100" type="text" id="ticketsPricesInformationInput"></textarea>
 <button onclick='loadPricesFromText()'>load up prices info</button>
 
