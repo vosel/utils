@@ -7,6 +7,11 @@
 
 <script type="text/javascript">
 var SHOW_DAY_OF_THE_MONTH_IN_LINK_TEXT = true; // a flag, which changes the way ticket links are printed out
+var SHOW_DAY_OF_THE_WEEK_IN_LINK_TEXT = true;
+var WEEKDAY_ABBRS_CYRILLIC = ["вс", "пн", "вт", "ср", "чт", "пт", "сб"];
+var WEEKDAY_ABBRS_LATIN = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"];
+var WEEKDAY_ABBRS = WEEKDAY_ABBRS_CYRILLIC;
+
 var chainTextInputs = [];
 var segmentsTextInputs = [];
 function DGEBI(id) //Shorthand for document.getElementById()
@@ -278,6 +283,9 @@ function getCurrentLinkForChain(chainData) //note: this function no longer depen
 		
 		if (SHOW_DAY_OF_THE_MONTH_IN_LINK_TEXT) {
 			textSummary += ">" + util_normalizeToTwoDigits(chainData[i].date.getDate());
+			if (SHOW_DAY_OF_THE_WEEK_IN_LINK_TEXT) {
+				textSummary += WEEKDAY_ABBRS[chainData[i].date.getDay()];
+			}
 		}
 		textSummary += ">" + to_value;
 		previousDestination = to_value;
