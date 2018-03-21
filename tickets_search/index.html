@@ -583,12 +583,18 @@ var ALL_THE_GENERATED_ROUTE_VARIATIONS_DATA = null;
 function showTheRoutesTableForDatesVariation(variationIndex)
 {
 	var entryToShow = ALL_THE_GENERATED_ROUTE_VARIATIONS_DATA[variationIndex];
-	var arrayOfRouteRepresentations = (ALL_THE_GENERATED_ROUTE_VARIATIONS_DATA.length > 0) ? entryToShow.ticketsTableData : [];
+	var arrayOfRouteRepresentations = [];
+	var locationsStayInfo = "";
+	if (ALL_THE_GENERATED_ROUTE_VARIATIONS_DATA.length > 0) {
+		arrayOfRouteRepresentations = entryToShow.ticketsTableData;
+		locationsStayInfo = "Time at each location:<br>" + entryToShow.getDaysToStaySummary("<br>");
+	}
+	
 	var tableInnerHtml = "";
 	for (let i = 0; i < arrayOfRouteRepresentations.length; ++i) {
 		tableInnerHtml += arrayOfRouteRepresentations[i].rowHtml;
 	}
-	tableInnerHtml += "<tr><th>total entries: " + arrayOfRouteRepresentations.length + "</th><th></th><th></th><th></th></tr>"
+	tableInnerHtml += "<tr><th>total entries: " + arrayOfRouteRepresentations.length + "</th><th>" + locationsStayInfo + "</th><th></th><th></th></tr>"
 	DGEBI('ticketAllocationOptions').innerHTML = tableInnerHtml;
 }
 
