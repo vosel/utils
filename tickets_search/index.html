@@ -504,6 +504,16 @@ function variateDaysAndCalculateTicketsAllocations(baseChain, output_arrayOfLink
 			text: textRepresentationOfRoute,
 			ticketsTableData: arrayOfRouteRepresentations,
 			daysToStayInfo: daysInEachLocation,
+			getDaysToStaySummary: function (delimiterString) {
+				let result = "";
+				for (let i = 0; i < this.daysToStayInfo.length; ++i) {
+					if (i > 0) {
+						result += delimiterString;
+					}
+					result += this.daysToStayInfo[i];
+				}
+				return result;
+			},
 			bestKnownPrice: (arrayOfRouteRepresentations.length > 0) ? arrayOfRouteRepresentations[0].totalPrice : -1
 		});
 	}; //end of calculateAndPushInformationForGivenRoute() function object
@@ -605,13 +615,7 @@ function recalcTicketAllocations()
 		}
 		datesVariationsTableInnerHtml += "</td>";
 		datesVariationsTableInnerHtml += "<td>";
-		for (let locationDurationSummaryIndex = 0; locationDurationSummaryIndex < entry.daysToStayInfo.length; ++locationDurationSummaryIndex) {
-			if (locationDurationSummaryIndex > 0) {
-				datesVariationsTableInnerHtml += " | ";
-			}
-			datesVariationsTableInnerHtml += entry.daysToStayInfo[locationDurationSummaryIndex];
-		}
-		
+		datesVariationsTableInnerHtml += entry.getDaysToStaySummary(" | ");
 		datesVariationsTableInnerHtml += "</td>";
 		datesVariationsTableInnerHtml += "</tr>";
 	}
