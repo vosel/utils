@@ -472,20 +472,38 @@ function recalcTicketAllocationsForRoute(allTheFlightsForTheRouteInOneArray, arr
 function util_getVariation(index) {
 	return parseInt(segmentsTextInputs[index].daysVariation.value);
 }
+function util_getDayNumberWithWeekday(dateToRepresent) {
+	return util_normalizeToTwoDigits(dateToRepresent.getDate()) + WEEKDAY_ABBRS[dateToRepresent.getDay()];
+}
 
 // This function builds a whole bunch of chains (which differ only in dates), and for each of the chain it builds the ticket permuattions for the route.
 function variateDaysAndCalculateTicketsAllocations(baseChain, output_arrayOfLinksWithUnknownPrices) {
 	var resultArray = [];
 	var calculateAndPushInformationForGivenRoute = function(currentChain) {
 		let textRepresentationOfRoute = "-";
+		let daysInEachLocation = [];
+		
 		for (let i = 0; i < currentChain.length; ++i) {
 			textRepresentationOfRoute += currentChain[i].date.getDate() + "-";
+			if (i < (currentChain.length - 1)) {
+				// Here we calculate the human-readable strings, which contain information about the days of staying at each location (count, arrival and departure dates)
+				let locationSubstr = currentChain[i].to;
+				if (currentChain[i].to != currentChain[i+1].from) {
+					locationSubstr += "~" + currentChain[i+1].from;
+				}
+				let durationInDays = (currentChain[i+1].date.getTime() - currentChain[i].date.getTime())/MILLISECONDS_IN_DAY;
+				let currentEntry = locationSubstr + " " + durationInDays
+					+ "days (" + util_getDayNumberWithWeekday(currentChain[i].date)
+					+ "-" + util_getDayNumberWithWeekday(currentChain[i+1].date) + ")";
+				daysInEachLocation.push(currentEntry);
+			}
 		}
 		let arrayOfRouteRepresentations = recalcTicketAllocationsForRoute(currentChain, output_arrayOfLinksWithUnknownPrices);
 		
 		resultArray.push({
 			text: textRepresentationOfRoute,
 			ticketsTableData: arrayOfRouteRepresentations,
+			daysToStayInfo: daysInEachLocation,
 			bestKnownPrice: (arrayOfRouteRepresentations.length > 0) ? arrayOfRouteRepresentations[0].totalPrice : -1
 		});
 	}; //end of calculateAndPushInformationForGivenRoute() function object
@@ -585,7 +603,16 @@ function recalcTicketAllocations()
 		if (entry.bestKnownPrice > 0) {
 			datesVariationsTableInnerHtml += entry.bestKnownPrice;
 		}
-		datesVariationsTableInnerHtml += "</td>";		
+		datesVariationsTableInnerHtml += "</td>";
+		datesVariationsTableInnerHtml += "<td>";
+		for (let locationDurationSummaryIndex = 0; locationDurationSummaryIndex < entry.daysToStayInfo.length; ++locationDurationSummaryIndex) {
+			if (locationDurationSummaryIndex > 0) {
+				datesVariationsTableInnerHtml += " | ";
+			}
+			datesVariationsTableInnerHtml += entry.daysToStayInfo[locationDurationSummaryIndex];
+		}
+		
+		datesVariationsTableInnerHtml += "</td>";
 		datesVariationsTableInnerHtml += "</tr>";
 	}
 	DGEBI('datesVariationsOptions').innerHTML = datesVariationsTableInnerHtml;
