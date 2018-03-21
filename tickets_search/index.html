@@ -589,7 +589,7 @@ function recalcTicketAllocations()
 	
 	ALL_THE_GENERATED_ROUTE_VARIATIONS_DATA = variateDaysAndCalculateTicketsAllocations(allTheFlightsInOneArray, arrayOfLinksWithUnknownPrices);
 	
-	var datesVariationsTableInnerHtml = "<th>index</th><th>dates info</th><th>price info</th>";
+	var datesVariationsTableInnerHtml = "<th>index</th><th>dates info</th><th>price info</th><th>days spent at each location</th>";
 	for (let i = 0; i < ALL_THE_GENERATED_ROUTE_VARIATIONS_DATA.length; ++i) {
 		let entry = ALL_THE_GENERATED_ROUTE_VARIATIONS_DATA[i];
 		datesVariationsTableInnerHtml += "<tr>";
