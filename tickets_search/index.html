@@ -493,7 +493,7 @@ function variateDaysAndCalculateTicketsAllocations(baseChain, output_arrayOfLink
 				}
 				let durationInDays = (currentChain[i+1].date.getTime() - currentChain[i].date.getTime())/MILLISECONDS_IN_DAY;
 				let currentEntry = locationSubstr + " " + durationInDays
-					+ "days (" + util_getDayNumberWithWeekday(currentChain[i].date)
+					+ "d (" + util_getDayNumberWithWeekday(currentChain[i].date)
 					+ "-" + util_getDayNumberWithWeekday(currentChain[i+1].date) + ")";
 				daysInEachLocation.push(currentEntry);
 			}
