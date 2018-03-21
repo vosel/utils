@@ -486,7 +486,7 @@ function variateDaysAndCalculateTicketsAllocations(baseChain, output_arrayOfLink
 		resultArray.push({
 			text: textRepresentationOfRoute,
 			ticketsTableData: arrayOfRouteRepresentations,
-			bestKnownPrice: arrayOfRouteRepresentations[0].totalPrice
+			bestKnownPrice: (arrayOfRouteRepresentations.length > 0) ? arrayOfRouteRepresentations[0].totalPrice : -1
 		});
 	}; //end of calculateAndPushInformationForGivenRoute() function object
 	
@@ -555,7 +555,7 @@ var ALL_THE_GENERATED_ROUTE_VARIATIONS_DATA = null;
 function showTheRoutesTableForDatesVariation(variationIndex)
 {
 	var entryToShow = ALL_THE_GENERATED_ROUTE_VARIATIONS_DATA[variationIndex];
-	var arrayOfRouteRepresentations = entryToShow.ticketsTableData;
+	var arrayOfRouteRepresentations = (ALL_THE_GENERATED_ROUTE_VARIATIONS_DATA.length > 0) ? entryToShow.ticketsTableData : [];
 	var tableInnerHtml = "";
 	for (let i = 0; i < arrayOfRouteRepresentations.length; ++i) {
 		tableInnerHtml += arrayOfRouteRepresentations[i].rowHtml;
