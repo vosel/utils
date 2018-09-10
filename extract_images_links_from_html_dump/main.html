@@ -1,0 +1,46 @@
+<html>
+<head>
+<meta charset="UTF-8">
+</head>
+<script type="text/javascript" src='core.js'></script>
+
+<script type="text/javascript">
+
+function runExtraction()
+{
+	var resultArray = [];
+	var myProcessor = new MyLinesProcessor({
+		newUrl: function(url) {
+			resultArray.push(url);
+		}
+	});
+	var inputData = document.getElementById('inputText').value;
+	myProcessor.process(inputData);
+	
+	var resultHrefs = "";
+	var resultString = "";
+	for (var i = 0; i < resultArray.length; ++i) {
+		var entry = resultArray[i];
+		resultString += "<img src=\"" + 
+				entry + 
+				"\"></img>\n";
+		resultHrefs += "<a href='" + entry + "'>" + entry + "</a><br>";
+	}
+	
+	document.getElementById('outputText').value = "<html><head></head><body>" + resultString + "</body></html>";
+	document.getElementById('outputHtml').innerHTML = resultHrefs + resultString;
+}
+
+</script>
+
+
+<body>
+<textarea rows="5" cols="50" id='inputText' type="text"></textarea>
+<textarea rows="5" cols="50" id='outputText' type="text"></textarea>
+<br>
+<button onclick='runExtraction()'>process</button>
+<br>
+<div id='outputHtml'></div>
+
+</body>
+</html>
