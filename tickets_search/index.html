@@ -21,19 +21,69 @@ function DGEBI(id) //Shorthand for document.getElementById()
 
 var pricesDatabase = [];
 
-function extractKeyFromUrl(link) //TODO: extract the momondo-specific code into separate file
-{
-//link example: https://www.momondo.ru/flightsearch/?Search=true&TripType=1&SegNo=1&SO0=SEL&SD0=OVB&SDP0=24-01-2018&AD=1&TK=ECO&DO=false&NA=false&currency=RUB
+var OLD_MOMONDO_URL_FORMAT_MANAGER = {
+	  extractKeyFromUrl: function(link)
+	{
+	//link example: https://www.momondo.ru/flightsearch/?Search=true&TripType=1&SegNo=1&SO0=SEL&SD0=OVB&SDP0=24-01-2018&AD=1&TK=ECO&DO=false&NA=false&currency=RUB
 
-// note: for some situations, our code generate a link, which is changed by momondo (see the 'TripType=1' part of the link). Also, there could be issues with https vs http prefix.
-// so, we will trim all of that away.
-	var indexOfUnchangedPartStart = link.indexOf("SegNo");
-	return link.substr(indexOfUnchangedPartStart);
+	// note: for some situations, our code generates a link, which is changed by momondo (see the 'TripType=1' part of the link). Also, there could be issues with https vs http prefix.
+	// so, we will trim all of that away.
+		var indexOfUnchangedPartStart = link.indexOf("SegNo");
+		return link.substr(indexOfUnchangedPartStart);
+	}
+
+
+	, getCurrentLinkForChain: function(chainData) //note: this function no longer depends on the ui, so we could pass custom chains to it.
+	{
+		var result = "https://www.momondo.ru/flightsearch/?Search=true&TripType=4&SegNo=";
+		var segmentsCount = 0;
+		var segmentsPartOfUrl = "";
+		var textSummary = "";
+		var previousDestination = null;
+		var properAirpordAbbrLen = 3;
+		for (var i = 0; i < chainData.length; ++i) {
+			var from_value = chainData[i].from;
+			var to_value = chainData[i].to;
+			if ((from_value.length != properAirpordAbbrLen) || (to_value.length != properAirpordAbbrLen)) { //TODO: remove this check (it is done in buildChainOfFlighsInTicket
+				break;
+			}
+			if (previousDestination != from_value) {
+				if (previousDestination != null) {
+					textSummary += "---";
+				}
+				textSummary += from_value;
+			}
+			
+			if (SHOW_DAY_OF_THE_MONTH_IN_LINK_TEXT) {
+				textSummary += ">" + util_normalizeToTwoDigits(chainData[i].date.getDate());
+				if (SHOW_DAY_OF_THE_WEEK_IN_LINK_TEXT) {
+					textSummary += WEEKDAY_ABBRS[chainData[i].date.getDay()];
+				}
+			}
+			textSummary += ">" + to_value;
+			previousDestination = to_value;
+			var in_url_index = i;
+			segmentsPartOfUrl += "&SO" + in_url_index + "=" + from_value + "&SD" 
+				+ in_url_index + "=" + to_value + "&SDP" + in_url_index + "=" + convertDateObjectInCorrectFormatForURL(chainData[i].date);
+			++segmentsCount;
+		}
+		result += segmentsCount;
+		result += segmentsPartOfUrl;
+		result += "&AD=1&TK=ECO&DO=false&NA=false&currency=RUB";
+		
+		var storedPrice = getPriceForLink(result);
+		if (storedPrice > 0) {
+			textSummary += " (" + storedPrice + "p)";
+		}
+		return { url:result, status: "ok", textRepresentation: textSummary, price:storedPrice};
+	}
 }
+
+var URLS_MANAGER = OLD_MOMONDO_URL_FORMAT_MANAGER;
 
 function getPriceForLink(link)
 {
-	var key = extractKeyFromUrl(link);
+	var key = URLS_MANAGER.extractKeyFromUrl(link);
 	for (var i = 0; i < pricesDatabase.length; ++i) {//TODO: use associative array instead of this loop
 		if (pricesDatabase[i].key == key) {
 			return pricesDatabase[i].price;
@@ -44,7 +94,7 @@ function getPriceForLink(link)
 
 function storePriceInfoInDatabase(link, priceValue)
 {
-	var key = extractKeyFromUrl(link);
+	var key = URLS_MANAGER.extractKeyFromUrl(link);
 	for (var i = 0; i < pricesDatabase.length; ++i) {//TODO: maybe will use associative array instead of this loop
 		if (pricesDatabase[i].key == key) {
 			pricesDatabase[i].price = priceValue;
@@ -257,53 +307,9 @@ function buildChainOfFlighsInTicket(startIndex, endIndex) {
 function getCurrentLinkForChainInUI(startIndex, endIndex)
 {
 	var chainDataFromUI = buildChainOfFlighsInTicket(startIndex, endIndex);
-	return getCurrentLinkForChain(chainDataFromUI);
+	return URLS_MANAGER.getCurrentLinkForChain(chainDataFromUI);
 }
 
-function getCurrentLinkForChain(chainData) //note: this function no longer depends on the ui, so we could pass custom chains to it.
-{  //TODO: extract the momondo-specific code into separate file
-	var result = "https://www.momondo.ru/flightsearch/?Search=true&TripType=4&SegNo=";
-	var segmentsCount = 0;
-	var segmentsPartOfUrl = "";
-	var textSummary = "";
-	var previousDestination = null;
-	var properAirpordAbbrLen = 3;
-	for (var i = 0; i < chainData.length; ++i) {
-		var from_value = chainData[i].from;
-		var to_value = chainData[i].to;
-		if ((from_value.length != properAirpordAbbrLen) || (to_value.length != properAirpordAbbrLen)) { //TODO: remove this check (it is done in buildChainOfFlighsInTicket
-			break;
-		}
-		if (previousDestination != from_value) {
-			if (previousDestination != null) {
-				textSummary += "---";
-			}
-			textSummary += from_value;
-		}
-		
-		if (SHOW_DAY_OF_THE_MONTH_IN_LINK_TEXT) {
-			textSummary += ">" + util_normalizeToTwoDigits(chainData[i].date.getDate());
-			if (SHOW_DAY_OF_THE_WEEK_IN_LINK_TEXT) {
-				textSummary += WEEKDAY_ABBRS[chainData[i].date.getDay()];
-			}
-		}
-		textSummary += ">" + to_value;
-		previousDestination = to_value;
-		var in_url_index = i;
-		segmentsPartOfUrl += "&SO" + in_url_index + "=" + from_value + "&SD" 
-			+ in_url_index + "=" + to_value + "&SDP" + in_url_index + "=" + convertDateObjectInCorrectFormatForURL(chainData[i].date);
-		++segmentsCount;
-	}
-	result += segmentsCount;
-	result += segmentsPartOfUrl;
-	result += "&AD=1&TK=ECO&DO=false&NA=false&currency=RUB";
-	
-	var storedPrice = getPriceForLink(result);
-	if (storedPrice > 0) {
-		textSummary += " (" + storedPrice + "p)";
-	}
-	return { url:result, status: "ok", textRepresentation: textSummary, price:storedPrice};
-}
 function getComplexCurrentLink_fromUI()
 {
 	return getCurrentLinkForChainInUI(0, segmentsTextInputs.length);
@@ -406,7 +412,7 @@ function recalcTicketAllocationsForRoute(allTheFlightsForTheRouteInOneArray, arr
 		for (let i = 0; i < TOTAL_FLIGHTS_COUNT; ++i) {
 			result += "<td>";
 			if (i < ticketsSetArray.length) {
-				let linkInfo = getCurrentLinkForChain(ticketsSetArray[i]);
+				let linkInfo = URLS_MANAGER.getCurrentLinkForChain(ticketsSetArray[i]);
 				result += "<a href='" + linkInfo.url + "' + target='_blank'>" + linkInfo.textRepresentation + "</a>"; //TODO: extract this into method (building link from the object)
 				if (linkInfo.price == -1) {
 					routePrice = -1;
