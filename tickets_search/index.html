@@ -21,6 +21,16 @@ function DGEBI(id) //Shorthand for document.getElementById()
 
 var pricesDatabase = [];
 
+function dateToString_DD_MM_YYYY(dateObj)
+{
+	return util_normalizeToTwoDigits(dateObj.getDate()) + "-" + util_normalizeToTwoDigits(dateObj.getMonth() + 1) + "-" + dateObj.getFullYear();
+}
+
+function dateToString_YYYY_MM_DD(dateObj)
+{
+	return dateObj.getFullYear() + "-" + util_normalizeToTwoDigits(dateObj.getMonth() + 1) + "-" + util_normalizeToTwoDigits(dateObj.getDate());
+}
+
 var OLD_MOMONDO_URL_FORMAT_MANAGER = {
 	  extractKeyFromUrl: function(link)
 	{
@@ -32,8 +42,7 @@ var OLD_MOMONDO_URL_FORMAT_MANAGER = {
 		return link.substr(indexOfUnchangedPartStart);
 	}
 
-
-	, getCurrentLinkForChain: function(chainData) //note: this function no longer depends on the ui, so we could pass custom chains to it.
+	, getCurrentLinkForChain: function(chainData)
 	{
 		var result = "https://www.momondo.ru/flightsearch/?Search=true&TripType=4&SegNo=";
 		var segmentsCount = 0;
@@ -64,7 +73,7 @@ var OLD_MOMONDO_URL_FORMAT_MANAGER = {
 			previousDestination = to_value;
 			var in_url_index = i;
 			segmentsPartOfUrl += "&SO" + in_url_index + "=" + from_value + "&SD" 
-				+ in_url_index + "=" + to_value + "&SDP" + in_url_index + "=" + convertDateObjectInCorrectFormatForURL(chainData[i].date);
+				+ in_url_index + "=" + to_value + "&SDP" + in_url_index + "=" + dateToString_DD_MM_YYYY(chainData[i].date);
 			++segmentsCount;
 		}
 		result += segmentsCount;
@@ -208,11 +217,6 @@ function getDateInCorrectFormatForURL(dateString)  //TODO: extract the momondo-s
 function util_normalizeToTwoDigits(n)
 {
 	return (n<10) ? ('0'+n) : (''+n);
-}
-
-function convertDateObjectInCorrectFormatForURL(dateObj)
-{
-	return util_normalizeToTwoDigits(dateObj.getDate()) + "-" + util_normalizeToTwoDigits(dateObj.getMonth() + 1) + "-" + dateObj.getFullYear();
 }
 
 function convertDateStringFromURLtoHtmlElementFormat(dateString) //TODO: extract the momondo-specific code into separate file
