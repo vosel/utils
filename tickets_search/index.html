@@ -88,7 +88,54 @@ var OLD_MOMONDO_URL_FORMAT_MANAGER = {
 	}
 }
 
-var URLS_MANAGER = OLD_MOMONDO_URL_FORMAT_MANAGER;
+var MOMONDO_2018_URL_FORMAT_MANAGER = {
+	  extractKeyFromUrl: function(link)
+	{
+	//link example: https://www.momondo.ru/flight-search/OVB-HKG/2018-11-03/HKG-SEL/2018-11-07/1adults/?sort=price_a
+
+		var indexOfHeaderPartToTrim = link.indexOf("flight-search");
+		var trimmedFromFrontUrlPart = link.substr(indexOfHeaderPartToTrim);
+		return trimmedFromFrontUrlPart;
+	}
+
+	, getCurrentLinkForChain: function(chainData)
+	{
+		var result = "https://www.momondo.ru/flight-search";
+		var textSummary = "";
+		var segmentsPartOfUrl = "";
+		var previousDestination = null;
+		for (var i = 0; i < chainData.length; ++i) {
+			var from_value = chainData[i].from;
+			var to_value = chainData[i].to;
+			if (previousDestination != from_value) {
+				if (previousDestination != null) {
+					textSummary += "---";
+				}
+				textSummary += from_value;
+			}
+			
+			if (SHOW_DAY_OF_THE_MONTH_IN_LINK_TEXT) {
+				textSummary += ">" + util_normalizeToTwoDigits(chainData[i].date.getDate());
+				if (SHOW_DAY_OF_THE_WEEK_IN_LINK_TEXT) {
+					textSummary += WEEKDAY_ABBRS[chainData[i].date.getDay()];
+				}
+			}
+			textSummary += ">" + to_value;
+			previousDestination = to_value;
+			segmentsPartOfUrl += "/" + from_value + "-" + to_value + "/" + dateToString_YYYY_MM_DD(chainData[i].date);
+		}
+		result += segmentsPartOfUrl;
+		result += "/?sort=price_a";
+		
+		var storedPrice = getPriceForLink(result);
+		if (storedPrice > 0) {
+			textSummary += " (" + storedPrice + "p)";
+		}
+		return { url:result, status: "ok", textRepresentation: textSummary, price:storedPrice};
+	}
+}
+
+var URLS_MANAGER = MOMONDO_2018_URL_FORMAT_MANAGER;
 
 function getPriceForLink(link)
 {
