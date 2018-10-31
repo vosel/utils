@@ -254,13 +254,6 @@ function onLoad()
 	}
 }
 
-//TODO: these dateString-conversion functions are exactly the same, need to extract the duplicated logic into utility function
-function getDateInCorrectFormatForURL(dateString)  //TODO: extract the momondo-specific code into separate file
-{
-	var dateElements = dateString.split("-");
-	return dateElements[2] + "-" + dateElements[1] + "-" + dateElements[0];
-}
-
 function util_normalizeToTwoDigits(n)
 {
 	return (n<10) ? ('0'+n) : (''+n);
