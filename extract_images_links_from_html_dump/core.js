@@ -38,7 +38,7 @@ function MyLinesProcessor(outputObject)
 	this.process = function (lineToProcess) {
 		var index = 0;
 		while ((index <= lineToProcess.length) && (index >= 0)) {
-			var searchResult = indexOfAny(lineToProcess, [".jpg", ".mp4"], index + 1);
+			var searchResult = indexOfAny(lineToProcess, [".png", ".svg", ".jpg", ".avi", ".mkv", ".mp4"], index + 1);
 			if (searchResult != null) {
 				var url = backTrackAndExtractUrl(searchResult.index, lineToProcess);
 				index = searchResult.index;
