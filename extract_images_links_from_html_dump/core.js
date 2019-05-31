@@ -31,6 +31,12 @@ function indexOfAny(lineToProcess, arrayOfStringsToSearch, startSearchIndex) {
 	return resultToReturn;
 }
 
+//This is a helper function which converts links from the json strings (they have escape sequences befor the '/' symbols)
+function unescapeJsonFormattedLinkIfNeeded(urlToProcess)
+{
+	return urlToProcess.split("\\/").join("/");
+}
+
 // Note: the 'outputObject', should be used as a outlet for the results. This object should have newUrl() function for processing them.
 function MyLinesProcessor(outputObject)
 {
@@ -41,7 +47,7 @@ function MyLinesProcessor(outputObject)
 		while ((index <= lineToProcess.length) && (index >= 0)) {
 			var searchResult = indexOfAny(lineToProcess, [".png", ".svg", ".jpg", ".avi", ".mkv", ".mp4"], index + 1);
 			if (searchResult != null) {
-				var url = backTrackAndExtractUrl(searchResult.index, lineToProcess);
+				var url = unescapeJsonFormattedLinkIfNeeded(backTrackAndExtractUrl(searchResult.index, lineToProcess));
 				index = searchResult.index;
 				if (this.links_duplication_filter[url] == null) {
 					this.output.newUrl(url);
