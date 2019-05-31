@@ -13,6 +13,9 @@ function runExtraction()
 		newUrl: function(url) {
 			resultArray.push(url);
 		}
+		, duplicatedUrl: function(url) {
+			console.log("duplicated url thrown away: " + url);
+		}
 	});
 	var inputData = document.getElementById('inputText').value;
 	myProcessor.process(inputData);

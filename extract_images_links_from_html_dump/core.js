@@ -35,6 +35,7 @@ function indexOfAny(lineToProcess, arrayOfStringsToSearch, startSearchIndex) {
 function MyLinesProcessor(outputObject)
 {
 	this.output = outputObject;
+	this.links_duplication_filter = {};
 	this.process = function (lineToProcess) {
 		var index = 0;
 		while ((index <= lineToProcess.length) && (index >= 0)) {
@@ -42,7 +43,12 @@ function MyLinesProcessor(outputObject)
 			if (searchResult != null) {
 				var url = backTrackAndExtractUrl(searchResult.index, lineToProcess);
 				index = searchResult.index;
-				this.output.newUrl(url);
+				if (this.links_duplication_filter[url] == null) {
+					this.output.newUrl(url);
+					this.links_duplication_filter[url] = {};
+				} else {
+					this.output.duplicatedUrl(url);
+				}
 			} else {
 				return;
 			}
